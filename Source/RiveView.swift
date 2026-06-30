@@ -60,6 +60,9 @@ open class RiveView: RiveRendererView {
     public var drawOptimization: DrawOptimization = .drawOnChanged
     private var forceDraw: Bool = false
     private var wasOnscreen: Bool = false
+    /// Last drawable size for which a cold-start redraw was forced, so the
+    /// "first valid non-zero size" redraw fires once rather than on every layout pass.
+    private var lastForcedDrawableSize: CGSize = .zero
 
     // MARK: Render Loop
     internal private(set) var isPlaying: Bool = false
@@ -492,6 +495,12 @@ open class RiveView: RiveRendererView {
                 artboard.setHeight(Double(currentSize.height) / scale)
                 advance(delta: 0)
             }
+        } else if drawableSize.width > 0, drawableSize.height > 0,
+                  drawableSize != lastForcedDrawableSize,
+                  riveModel?.artboard != nil {
+            lastForcedDrawableSize = drawableSize
+            forceDraw = true
+            needsDisplay()
         }
     }
 
